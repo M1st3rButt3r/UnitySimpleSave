@@ -18,6 +18,17 @@ public static class SimpleSave
         formatter.Serialize(stream, buffer);
         stream.Close();
     }
+    
+    public static void Delete(string filename)
+    {
+        string path = Application.persistentDataPath + "/" + filename;
+        if (!File.Exists(path))
+        {
+            Debug.LogError($"[Simple Save] File '{path}' does not exist!");
+            return;
+        }
+        File.Delete(path);
+    }
 
     public static void Load(string filename)
     {
@@ -31,6 +42,12 @@ public static class SimpleSave
         var formatter = new BinaryFormatter();
         var stream = new FileStream(_currentPath, FileMode.Open);
         buffer = formatter.Deserialize(stream) as Dictionary<string, object>;
+    }
+    
+    public static void Clear()
+    {
+        _currentPath = "";
+        buffer = new Dictionary<string, object>();
     }
 
     private static void RemoveNonSerializableTypes()
