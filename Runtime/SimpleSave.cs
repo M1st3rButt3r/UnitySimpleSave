@@ -5,17 +5,32 @@ using UnityEngine;
 
 public static class SimpleSave
 {
-    private static string _currentPath;
-    private static Dictionary<string, object> buffer = new Dictionary<string, object>();
+    private static string _currentPath = "";
+    public static Dictionary<string, object> buffer = new Dictionary<string, object>();
 
-    public static void Save(string filename)
+    public static void Save(string filename = "")
     {
-        _currentPath = Application.persistentDataPath + "/" + filename;
+        if (filename != "") _currentPath = Application.persistentDataPath + "/" + filename;
+        else if (_currentPath == "") return;
         RemoveNonSerializableTypes();
         var formatter = new BinaryFormatter();
         var stream = new FileStream(_currentPath, FileMode.Create);
         formatter.Serialize(stream, buffer);
         stream.Close();
+    }
+
+    public static void Load(string filename)
+    {
+        string path = Application.persistentDataPath + "/" + filename;
+        if (!File.Exists(path))
+        {
+            Debug.LogError($"[Simple Save] File '{path}' does not exist!");
+            return;
+        }
+        _currentPath = path;
+        var formatter = new BinaryFormatter();
+        var stream = new FileStream(_currentPath, FileMode.Open);
+        buffer = formatter.Deserialize(stream) as Dictionary<string, object>;
     }
 
     private static void RemoveNonSerializableTypes()
@@ -25,7 +40,7 @@ public static class SimpleSave
         {
             if (data.Value.GetType().IsSerializable) return;
             toRemove.Add(data.Key);
-            Debug.LogWarning($"[Simple Save] Data with the key '{data.Key}' is not serializable");
+            Debug.LogWarning($"[Simple Save] Data with the key '{data.Key}' is not serializable!");
         }
         toRemove.ForEach(key => { buffer.Remove(key); });
     }
