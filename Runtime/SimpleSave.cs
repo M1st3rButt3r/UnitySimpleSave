@@ -1,24 +1,53 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
 public static class SimpleSave
 {
     private static string _currentPath = "";
-    public static Dictionary<string, object> buffer = new Dictionary<string, object>();
+    private static Dictionary<string, object> _buffer = new Dictionary<string, object>();
 
+    public static void Set(string key, object value)
+    {
+        if (!value.GetType().IsSerializable)
+        {
+            Debug.Log($"[Simple Save] Type '{value.GetType()}' is not serializable!");
+            return;
+        }
+        _buffer.Add(key, value);
+    }
+
+    public static bool HasKey(string key)
+    {
+        return _buffer.ContainsKey(key);
+    }
+
+    public static T Get<T>(string key)
+    {
+        try
+        {
+            return (T) _buffer[key];
+        }
+        catch
+        {
+            Debug.Log($"[Simple Save] Key '{key}' does not exist as {typeof(T)}!");
+            return default;
+        }
+    }
+    
     public static void Save(string filename = "")
     {
         if (filename != "") _currentPath = Application.persistentDataPath + "/" + filename;
         else if (_currentPath == "") return;
-        RemoveNonSerializableTypes();
         var formatter = new BinaryFormatter();
         var stream = new FileStream(_currentPath, FileMode.Create);
-        formatter.Serialize(stream, buffer);
+        formatter.Serialize(stream, _buffer);
         stream.Close();
     }
-    
+
     public static void Delete(string filename)
     {
         string path = Application.persistentDataPath + "/" + filename;
@@ -28,6 +57,21 @@ public static class SimpleSave
             return;
         }
         File.Delete(path);
+    }
+    
+    public static Dictionary<string, string> GetSaves()
+    {
+        if (!Directory.Exists(Application.persistentDataPath)) return new Dictionary<string, string>();
+        
+        string[] files = Directory.GetFiles(Application.persistentDataPath);
+        var saves = new Dictionary<string, string>();
+        foreach (var file in files)
+        {
+            string name = Path.GetFileNameWithoutExtension(@file);
+            saves.Add(name, file);
+        }
+
+        return saves;
     }
 
     public static void Load(string filename)
@@ -41,24 +85,12 @@ public static class SimpleSave
         _currentPath = path;
         var formatter = new BinaryFormatter();
         var stream = new FileStream(_currentPath, FileMode.Open);
-        buffer = formatter.Deserialize(stream) as Dictionary<string, object>;
+        _buffer = formatter.Deserialize(stream) as Dictionary<string, object>;
     }
     
     public static void Clear()
     {
         _currentPath = "";
-        buffer = new Dictionary<string, object>();
-    }
-
-    private static void RemoveNonSerializableTypes()
-    {
-        var toRemove = new List<string>();
-        foreach (var data in buffer)
-        {
-            if (data.Value.GetType().IsSerializable) return;
-            toRemove.Add(data.Key);
-            Debug.LogWarning($"[Simple Save] Data with the key '{data.Key}' is not serializable!");
-        }
-        toRemove.ForEach(key => { buffer.Remove(key); });
+        _buffer = new Dictionary<string, object>();
     }
 }
