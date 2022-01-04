@@ -12,8 +12,9 @@ public class SimpleSaveSettings : ScriptableObject
     public const string SettingsPath = "Project/SimpleSaveSettings";
     public const string label = "SimpleSave";
     public static readonly HashSet<string> Keywords = new HashSet<string>(new[] {"SimpleSave", "SS", "Simple Save"});
-    
-    public string dataPath;
+
+    public string dataPath = "";
+    public SerializationMethod serializationMethod = SerializationMethod.Byte;
     
     public static SimpleSaveSettings GetOrCreateSettings()
     {
@@ -47,6 +48,7 @@ static class SimpleSaveSettingsIMGUIRegister
             {
                 var settings = SimpleSaveSettings.GetSerializedSettings();
                 EditorGUILayout.PropertyField(settings.FindProperty("dataPath"), new GUIContent("Data path"));
+                EditorGUILayout.PropertyField(settings.FindProperty("serializationMethod"), new GUIContent("Serialization Method"));
                 settings.ApplyModifiedPropertiesWithoutUndo();
             },
             keywords = SimpleSaveSettings.Keywords

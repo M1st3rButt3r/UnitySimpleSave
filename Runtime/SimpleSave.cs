@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Reflection;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 public static class SimpleSave
 {
@@ -10,44 +12,28 @@ public static class SimpleSave
         get => Path.Combine(Application.persistentDataPath,  SimpleSaveSettings.GetOrCreateSettings().dataPath);
     }
     private static string _currentPath = "";
-    private static Dictionary<string, object> _buffer = new Dictionary<string, object>();
+    private static Buffer _buffer = new Buffer();
 
     public static void Set(string key, object value)
     {
-        if (!value.GetType().IsSerializable)
-        {
-            Debug.Log($"[Simple Save] Type '{value.GetType()}' is not serializable!");
-            return;
-        }
-        _buffer.Add(key, value);
+        _buffer.Set(key, value);
     }
 
     public static bool HasKey(string key)
     {
-        return _buffer.ContainsKey(key);
+        return _buffer.HasKey(key);
     }
 
     public static T Get<T>(string key)
     {
-        try
-        {
-            return (T) _buffer[key];
-        }
-        catch
-        {
-            Debug.Log($"[Simple Save] Key '{key}' does not exist as {typeof(T)}!");
-            return default;
-        }
+        return _buffer.Get<T>(key);
     }
     
     public static void Save(string filename = "")
     {
         if (filename != "") _currentPath = Application.persistentDataPath + "/" + filename;
         else if (_currentPath == "") return;
-        var formatter = new BinaryFormatter();
-        var stream = new FileStream(_currentPath, FileMode.Create);
-        formatter.Serialize(stream, _buffer);
-        stream.Close();
+        SimpleSerialize.Serialize[SimpleSaveSettings.GetOrCreateSettings().serializationMethod].Invoke(_currentPath, _buffer);
     }
 
     public static void Delete(string filename)
@@ -85,14 +71,12 @@ public static class SimpleSave
             return;
         }
         _currentPath = path;
-        var formatter = new BinaryFormatter();
-        var stream = new FileStream(_currentPath, FileMode.Open);
-        _buffer = formatter.Deserialize(stream) as Dictionary<string, object>;
+        _buffer = (Buffer)SimpleSerialize.Deserialize[SimpleSaveSettings.GetOrCreateSettings().serializationMethod].Invoke(_currentPath);
     }
     
     public static void Clear()
     {
         _currentPath = "";
-        _buffer = new Dictionary<string, object>();
+        _buffer = new Buffer();
     }
 }
