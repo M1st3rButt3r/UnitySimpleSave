@@ -1,9 +1,7 @@
 {
-    "name": "SimpleSave",
+    "name": "SimpleSaveSettings",
     "rootNamespace": "",
-    "references": [
-        "SimpleSaveSettings"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

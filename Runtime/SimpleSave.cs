@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
 public static class SimpleSave
 {
+    private static string DataPath
+    {
+        get => Path.Combine(Application.persistentDataPath,  SimpleSaveSettings.GetOrCreateSettings().dataPath);
+    }
     private static string _currentPath = "";
     private static Dictionary<string, object> _buffer = new Dictionary<string, object>();
 
