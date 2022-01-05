@@ -14,7 +14,8 @@ public class SimpleSaveSettings : ScriptableObject
     public static readonly HashSet<string> Keywords = new HashSet<string>(new[] {"SimpleSave", "SS", "Simple Save"});
 
     public string dataPath = "";
-    public SerializationMethod serializationMethod = SerializationMethod.Byte;
+    public SerializationMethod serializationMethod = SerializationMethod.Json;
+    public EncryptionMethod encryptionMethod = EncryptionMethod.Aes;
     
     public static SimpleSaveSettings GetOrCreateSettings()
     {
