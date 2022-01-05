@@ -10,12 +10,13 @@ public class SimpleSaveSettings : ScriptableObject
 {
     public const string Path = "Assets/ProjectSettings/SimpleSaveSettings.asset";
     public const string SettingsPath = "Project/SimpleSaveSettings";
-    public const string label = "SimpleSave";
+    public const string Label = "SimpleSave";
     public static readonly HashSet<string> Keywords = new HashSet<string>(new[] {"SimpleSave", "SS", "Simple Save"});
 
     public string dataPath = "";
     public SerializationMethod serializationMethod = SerializationMethod.Json;
     public EncryptionMethod encryptionMethod = EncryptionMethod.Aes;
+    public string password = "";
     
     public static SimpleSaveSettings GetOrCreateSettings()
     {
@@ -44,12 +45,17 @@ static class SimpleSaveSettingsIMGUIRegister
     {
         var provider = new SettingsProvider(SimpleSaveSettings.SettingsPath, SettingsScope.Project)
         {
-            label = SimpleSaveSettings.label,
+            label = SimpleSaveSettings.Label,
             guiHandler = (searchContext) =>
             {
                 var settings = SimpleSaveSettings.GetSerializedSettings();
                 EditorGUILayout.PropertyField(settings.FindProperty("dataPath"), new GUIContent("Data path"));
                 EditorGUILayout.PropertyField(settings.FindProperty("serializationMethod"), new GUIContent("Serialization Method"));
+                EditorGUILayout.PropertyField(settings.FindProperty("encryptionMethod"), new GUIContent("Encryption Method"));
+                if (settings.FindProperty("encryptionMethod").enumValueIndex == Decimal.One)
+                {
+                    EditorGUILayout.PropertyField(settings.FindProperty("password"), new GUIContent("Password"));
+                }
                 settings.ApplyModifiedPropertiesWithoutUndo();
             },
             keywords = SimpleSaveSettings.Keywords
@@ -57,78 +63,5 @@ static class SimpleSaveSettingsIMGUIRegister
 
         return provider;
 
-    }
-}
-
-static class SimpleSaveSettingsUIElementsRegister
-{
-    [SettingsProvider]
-    public static SettingsProvider CreateSimpleSaveSettingsProvider()
-    {
-        var provider = new SettingsProvider(SimpleSaveSettings.SettingsPath, SettingsScope.Project)
-        {
-            label = SimpleSaveSettings.label,
-            activateHandler = (searchContext, rootElement) =>
-            {
-                var settings = SimpleSaveSettings.GetSerializedSettings();
-                
-                var title = new Label()
-                {
-                    text = SimpleSaveSettings.label
-                };
-                rootElement.Add(title);
-
-                var properties = new VisualElement()
-                {
-                };
-                rootElement.Add(properties);
-
-                properties.Add(new PropertyField(settings.FindProperty("dataPath")));
-                rootElement.Bind(settings);
-            },
-
-            keywords = SimpleSaveSettings.Keywords
-        };
-
-        return provider;
-    }
-}
-
-class SimpleSaveSettingsProvider : SettingsProvider
-{
-    private SerializedObject _simpleSaveSettings;
-
-    class Styles
-    {
-        public static readonly GUIContent Script = new GUIContent("Data Path");
-    }
-    public SimpleSaveSettingsProvider(string path, SettingsScope scope = SettingsScope.Project) : base(path, scope) {}
-
-    public static bool IsSettingsAvailable()
-    {
-        return File.Exists(SimpleSaveSettings.Path);
-    }
-
-    public override void OnActivate(string searchContext, VisualElement rootElement)
-    {
-        _simpleSaveSettings = SimpleSaveSettings.GetSerializedSettings();
-    }
-
-    public override void OnGUI(string searchContext)
-    {
-        EditorGUILayout.PropertyField(_simpleSaveSettings.FindProperty("dataPath"), Styles.Script);
-        _simpleSaveSettings.ApplyModifiedPropertiesWithoutUndo();
-    }
-
-    [SettingsProvider]
-    public static SettingsProvider CreateSimpleSaveSettingsProvider()
-    {
-        if (IsSettingsAvailable())
-        {
-            var provider = new SimpleSaveSettingsProvider(SimpleSaveSettings.SettingsPath + "Provider");
-            provider.keywords = GetSearchKeywordsFromGUIContentProperties<Styles>();
-        }
-
-        return null;
     }
 }

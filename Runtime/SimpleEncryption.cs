@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
+using UnityEngine;
 
 public enum EncryptionMethod
 {
@@ -11,6 +13,15 @@ public enum EncryptionMethod
 
 public static class SimpleEncryption
 {
+    public static byte[] key
+    {
+        get
+        {
+            using HashAlgorithm algorithm = SHA256.Create();
+            return algorithm.ComputeHash(Encoding.UTF8.GetBytes(SimpleSaveSettings.GetOrCreateSettings().password));
+        }
+    }
+    
     public static readonly Dictionary<EncryptionMethod, Func<Stream, Stream>> Writer =
         new Dictionary<EncryptionMethod, Func<Stream, Stream>>
         {
@@ -28,7 +39,7 @@ public static class SimpleEncryption
     public static Stream GetAesWriterStream(Stream stream)
     {
         using Aes aes = Aes.Create();
-        aes.Key = new byte[32]; 
+        aes.Key = key;
         aes.GenerateIV();
         aes.Mode = CipherMode.CBC;
         aes.Padding = PaddingMode.PKCS7;
@@ -43,7 +54,7 @@ public static class SimpleEncryption
     public static Stream GetAesReaderStream(Stream stream)
     {
         Aes aes = Aes.Create();
-        aes.Key = new byte[32];
+        aes.Key = key;
         
         byte[] iv = new byte[aes.BlockSize / 8];
         int remain = iv.Length;
