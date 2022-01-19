@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization.Json;
 using System.Xml.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 public enum SerializationMethod
 {
@@ -50,16 +51,23 @@ public static class SimpleSerialize
     {
         var stream = new FileStream(path, FileMode.Create);
         using var cstream = SimpleEncryption.Writer[SimpleSaveSettings.GetOrCreateSettings().encryptionMethod].Invoke(stream);
-        var serializer = new DataContractJsonSerializer(obj.GetType());
-        serializer.WriteObject(cstream, obj);
+        var options = new JsonSerializerOptions
+        {
+            IncludeFields = true,
+        };
+        JsonSerializer.Serialize(cstream,  obj, options);
     }
     
     public static T DeserializeFromJsonTo<T>(string path) where T : class
     {
         var stream = new FileStream(path, FileMode.Open);
         using var cstream = SimpleEncryption.Reader[SimpleSaveSettings.GetOrCreateSettings().encryptionMethod].Invoke(stream);
-        var serializer = new DataContractJsonSerializer(typeof(T));
-        return serializer.ReadObject(cstream) as T;
+        var options = new JsonSerializerOptions
+        {
+            IncludeFields = true
+
+        };
+        return JsonSerializer.Deserialize<T>(cstream, options);
     }
     
     public static void SerializeAsXml(string path, object obj)

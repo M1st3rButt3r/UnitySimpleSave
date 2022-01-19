@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using UnityEngine;
 
 [Serializable]
@@ -32,7 +32,12 @@ public class Buffer
         try
         {
             int i = Keys.ToList().IndexOf(key);
-            return (T) Values[i];
+            object value = Values[i];
+            if (value is JsonElement jvalue)
+            {
+                return jvalue.Deserialize<T>();
+            }
+            return (T) value;
         }
         catch
         {
