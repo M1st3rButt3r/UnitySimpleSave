@@ -29,11 +29,14 @@ public static class SimpleSave
         return _buffer.Get<T>(key);
     }
     
-    public static void Save(string filename = "")
+    public static void Save(string filename)
     {
-        if (filename != "") _currentPath = Application.persistentDataPath + "/" + filename;
-        else if (_currentPath == "") return;
-        SimpleSerialize.Serialize[SimpleSaveSettings.GetOrCreateSettings().serializationMethod].Invoke(_currentPath, _buffer);
+        if (filename == "") return;
+        _currentPath = Application.persistentDataPath + "/" + filename;
+        Stream stream = new FileStream(_currentPath, FileMode.Create);
+        Stream cStream = stream.Encrypt(SimpleSaveSettings.GetOrCreateSettings().encryptionMethod);
+        cStream.Serialize(_buffer, SimpleSaveSettings.GetOrCreateSettings().serializationMethod);
+        cStream.Close();
     }
 
     public static void Delete(string filename)
@@ -71,7 +74,8 @@ public static class SimpleSave
             return;
         }
         _currentPath = path;
-        _buffer = (Buffer)SimpleSerialize.Deserialize[SimpleSaveSettings.GetOrCreateSettings().serializationMethod].Invoke(_currentPath);
+        Stream stream = new FileStream(_currentPath, FileMode.Open);
+        _buffer = stream.Decrypt(SimpleSaveSettings.GetOrCreateSettings().encryptionMethod).Deserialize<Buffer>(SimpleSaveSettings.GetOrCreateSettings().serializationMethod);
     }
     
     public static void Clear()

@@ -14,67 +14,71 @@ public enum SerializationMethod
 
 public static class SimpleSerialize
 {
-    public static readonly Dictionary<SerializationMethod, Action<string, object>> Serialize =
-        new Dictionary<SerializationMethod, Action<string, object>>
+    public static readonly Dictionary<SerializationMethod, Action<Stream, object>> Serializer =
+        new Dictionary<SerializationMethod, Action<Stream, object>>
         {
             {SerializationMethod.Json, SerializeAsJson},
             {SerializationMethod.Byte, SerializeAsByte},
             {SerializationMethod.Xml, SerializeAsXml}
         };
     
-    public static readonly Dictionary<SerializationMethod, Func<string, object>> Deserialize =
-        new Dictionary<SerializationMethod, Func<string, object>>
+    public static readonly Dictionary<SerializationMethod, Func<Stream, object>> Deserializer =
+        new Dictionary<SerializationMethod, Func<Stream, object>>
         {
             {SerializationMethod.Json, DeserializeFromJsonTo<Buffer>},
             {SerializationMethod.Byte, DeserializeFromByteTo<Buffer>},
             {SerializationMethod.Xml, DeserializeFromXmlTo<Buffer>}
         };
+
+    public static void Serialize(this Stream stream, object obj, SerializationMethod serializationMethod)
+    {
+        Serializer[serializationMethod].Invoke(stream, obj);
+    }
+
+    public static T Deserialize<T>(this Stream stream, SerializationMethod serializationMethod) where T : class
+    {
+        switch (serializationMethod)
+        {
+            case SerializationMethod.Byte:
+                return DeserializeFromByteTo<T>(stream);
+            default:
+                return default;
+        }
+    }
     
-    public static void SerializeAsByte(string path, object obj)
+    public static void SerializeAsByte(this Stream stream, object obj)
     {
-        var stream = new FileStream(path, FileMode.Create);
-        using var cstream = SimpleEncryption.Writer[SimpleSaveSettings.GetOrCreateSettings().encryptionMethod].Invoke(stream);
         var formatter = new BinaryFormatter();
-        formatter.Serialize(cstream, obj);
+        formatter.Serialize(stream, obj);
     }
 
-    public static T DeserializeFromByteTo<T>(string path) where T : class 
+    public static T DeserializeFromByteTo<T>(this Stream stream) where T : class 
     {
-        var stream = new FileStream(path, FileMode.Open);
-        using var cstream = SimpleEncryption.Reader[SimpleSaveSettings.GetOrCreateSettings().encryptionMethod].Invoke(stream);
         var formatter = new BinaryFormatter();
-        return formatter.Deserialize(cstream) as T;
+        return formatter.Deserialize(stream) as T;
     }
 
-    public static void SerializeAsJson(string path, object obj)
+    public static void SerializeAsJson(this Stream stream, object obj)
     {
-        var stream = new FileStream(path, FileMode.Create);
-        using var cstream = SimpleEncryption.Writer[SimpleSaveSettings.GetOrCreateSettings().encryptionMethod].Invoke(stream);
         var serializer = new DataContractJsonSerializer(obj.GetType());
-        serializer.WriteObject(cstream, obj);
+        serializer.WriteObject(stream, obj);
     }
     
-    public static T DeserializeFromJsonTo<T>(string path) where T : class
+    public static T DeserializeFromJsonTo<T>(this Stream stream) where T : class
     {
-        var stream = new FileStream(path, FileMode.Open);
-        using var cstream = SimpleEncryption.Reader[SimpleSaveSettings.GetOrCreateSettings().encryptionMethod].Invoke(stream);
         var serializer = new DataContractJsonSerializer(typeof(T));
-        return serializer.ReadObject(cstream) as T;
+        return serializer.ReadObject(stream) as T;
     }
     
-    public static void SerializeAsXml(string path, object obj)
+    public static void SerializeAsXml(this Stream stream, object obj)
     {
-        using var stream = new FileStream(path, FileMode.Create);
-        using var cstream = SimpleEncryption.Writer[SimpleSaveSettings.GetOrCreateSettings().encryptionMethod].Invoke(stream);
         var serializer = new XmlSerializer(obj.GetType());
-        serializer.Serialize(cstream, obj);
+        serializer.Serialize(stream, obj);
     }
     
-    public static T DeserializeFromXmlTo<T>(string path) where T : class
+    public static T DeserializeFromXmlTo<T>(this Stream stream) where T : class
     {
-        var stream = new FileStream(path, FileMode.Open);
-        using var cstream = SimpleEncryption.Reader[SimpleSaveSettings.GetOrCreateSettings().encryptionMethod].Invoke(stream);
         var serializer = new XmlSerializer(typeof(T));
-        return serializer.Deserialize(cstream) as T;
+        return serializer.Deserialize(stream) as T;
     }
 }
