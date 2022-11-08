@@ -36,7 +36,17 @@ public static class SimpleEncryption
             {EncryptionMethod.Aes, GetAesReaderStream},
         };
 
-    public static Stream GetAesWriterStream(Stream stream)
+    public static Stream Encrypt(this Stream stream, EncryptionMethod encryptionMethod)
+    {
+        return Writer[encryptionMethod].Invoke(stream);
+    }
+
+    public static Stream Decrypt(this Stream stream, EncryptionMethod encryptionMethod)
+    {
+        return Reader[encryptionMethod].Invoke(stream);
+    }
+
+    public static Stream GetAesWriterStream(this Stream stream)
     {
         using Aes aes = Aes.Create();
         aes.Key = key;
@@ -51,7 +61,7 @@ public static class SimpleEncryption
         return new CryptoStream(stream, encryptor, CryptoStreamMode.Write);
     }
 
-    public static Stream GetAesReaderStream(Stream stream)
+    public static Stream GetAesReaderStream(this Stream stream)
     {
         Aes aes = Aes.Create();
         aes.Key = key;
