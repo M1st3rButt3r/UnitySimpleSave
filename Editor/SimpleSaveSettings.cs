@@ -16,9 +16,10 @@ public class SimpleSaveSettings : ScriptableObject
     public string dataPath = "";
     public SerializationMethod serializationMethod = SerializationMethod.Json;
     public EncryptionMethod encryptionMethod = EncryptionMethod.Aes;
+    public CompressionMethod compressionMethod = CompressionMethod.GZip;
     public string password = "";
     
-    public static SimpleSaveSettings GetOrCreateSettings()
+    public static SimpleSaveSettings Get()
     {
         var settings = AssetDatabase.LoadAssetAtPath<SimpleSaveSettings>(Path);
 
@@ -34,7 +35,7 @@ public class SimpleSaveSettings : ScriptableObject
 
     internal static SerializedObject GetSerializedSettings()
     {
-        return new SerializedObject(GetOrCreateSettings());
+        return new SerializedObject(Get());
     }
 }
 

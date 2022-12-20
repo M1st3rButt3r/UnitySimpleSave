@@ -18,7 +18,7 @@ public static class SimpleEncryption
         get
         {
             using HashAlgorithm algorithm = SHA256.Create();
-            return algorithm.ComputeHash(Encoding.UTF8.GetBytes(SimpleSaveSettings.GetOrCreateSettings().password));
+            return algorithm.ComputeHash(Encoding.UTF8.GetBytes(SimpleSaveSettings.Get().password));
         }
     }
     

@@ -9,7 +9,7 @@ public static class SimpleSave
 {
     private static string DataPath
     {
-        get => Path.Combine(Application.persistentDataPath,  SimpleSaveSettings.GetOrCreateSettings().dataPath);
+        get => Path.Combine(Application.persistentDataPath,  SimpleSaveSettings.Get().dataPath);
     }
     private static string _currentPath = "";
     private static Buffer _buffer = new Buffer();
@@ -34,9 +34,10 @@ public static class SimpleSave
         if (filename == "") return;
         _currentPath = Application.persistentDataPath + "/" + filename;
         Stream stream = new FileStream(_currentPath, FileMode.Create);
-        Stream cStream = stream.Encrypt(SimpleSaveSettings.GetOrCreateSettings().encryptionMethod);
-        cStream.Serialize(_buffer, SimpleSaveSettings.GetOrCreateSettings().serializationMethod);
-        cStream.Close();
+        Stream cryptoStream = stream.Encrypt(SimpleSaveSettings.Get().encryptionMethod);
+        Stream compStream = cryptoStream.Compress(SimpleSaveSettings.Get().compressionMethod);
+        compStream.Serialize(_buffer, SimpleSaveSettings.Get().serializationMethod);
+        compStream.Close();
     }
 
     public static void Delete(string filename)
@@ -75,7 +76,7 @@ public static class SimpleSave
         }
         _currentPath = path;
         Stream stream = new FileStream(_currentPath, FileMode.Open);
-        _buffer = stream.Decrypt(SimpleSaveSettings.GetOrCreateSettings().encryptionMethod).Deserialize<Buffer>(SimpleSaveSettings.GetOrCreateSettings().serializationMethod);
+        _buffer = stream.Decompress(SimpleSaveSettings.Get().compressionMethod).Decrypt(SimpleSaveSettings.Get().encryptionMethod).Deserialize<Buffer>(SimpleSaveSettings.Get().serializationMethod);
     }
     
     public static void Clear()
